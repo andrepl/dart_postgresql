@@ -69,9 +69,11 @@ class ConnectionImpl implements Connection {
   @deprecated Stream<Message> get unhandled => messages;
   
   final StreamController _messages = new StreamController.broadcast();
-  
+
+  final StreamController _notifications = new StreamController.broadcast();
+
   static Future<ConnectionImpl> connect(
-      String uri,
+  String uri,
       {Duration connectionTimeout,
        String applicationName,
        String timeZone,
@@ -400,6 +402,7 @@ class ConnectionImpl implements Connection {
       case _MSG_DATA_ROW:         _readDataRow(msgType, length); break;
       case _MSG_EMPTY_QUERY_REPONSE: assert(length == 0); break;
       case _MSG_COMMAND_COMPLETE: _readCommandComplete(msgType, length); break;
+      case _MSG_NOTIFICATION_RESPONSE: _readNotificationResponse(msgType, length); break;
 
       default:
         throw new PostgresqlException('Unknown, or unimplemented message: '
@@ -408,6 +411,14 @@ class ConnectionImpl implements Connection {
 
     if (pos + length != _buffer.bytesRead)
       throw new PostgresqlException('Lost message sync.', _getDebugName());
+  }
+
+  void _readNotificationResponse(int msgType, int length) {
+    assert(_buffer.bytesAvailable >= length);
+    int pid= _buffer.readInt32();
+    String channel = _buffer.readUtf8String(length);
+    String payload = _buffer.readUtf8String(length);
+    _notifications.add(new Notification(pid, channel, payload));
   }
 
   void _readErrorOrNoticeResponse(int msgType, int length) {
@@ -517,6 +528,11 @@ class ConnectionImpl implements Connection {
         return execute('rollback')
           .then((_) => new Future.error(e, st));
       });
+  }
+
+  Stream<Notification> channel(String channel) {
+    var query = _enqueueQuery('LISTEN "$channel"');
+    return this._notifications.stream.where((n) => n.channel == channel);
   }
 
   _Query _enqueueQuery(String sql) {
@@ -697,6 +713,17 @@ class ConnectionImpl implements Connection {
     _state = closed;
     _socket.destroy();
     new Future(() => _messages.close());
+  }
+
+}
+
+class Notification {
+  int pid;
+  String channel;
+  String payload;
+  Notification(this.pid, this.channel, this.payload);
+  String toString() {
+    return "($pid) $channel: $payload";
   }
 
 }

@@ -98,6 +98,8 @@ abstract class Connection {
   /// runInTransaction() to complete before making any further queries.
   Future runInTransaction(Future operation(), [Isolation isolation]);
 
+  /// Listens for notifications on channel
+  Stream<Notification> channel(String channel);
 
   /// Close the current [Connection]. It is safe to call this multiple times.
   /// This will never throw an exception.

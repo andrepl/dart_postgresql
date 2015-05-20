@@ -408,3 +408,14 @@ abstract class Settings {
   Map toMap();
   String toString();
 }
+class Notification {
+  int pid;
+  String channel;
+  String payload;
+
+  Notification(this.pid, this.channel, this.payload);
+
+  String toString() {
+    return "($pid) $channel: $payload";
+  }
+}

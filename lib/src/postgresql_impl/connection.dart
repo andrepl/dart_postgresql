@@ -716,14 +716,3 @@ class ConnectionImpl implements Connection {
   }
 
 }
-
-class Notification {
-  int pid;
-  String channel;
-  String payload;
-  Notification(this.pid, this.channel, this.payload);
-  String toString() {
-    return "($pid) $channel: $payload";
-  }
-
-}

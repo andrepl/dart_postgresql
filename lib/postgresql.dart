@@ -408,6 +408,7 @@ abstract class Settings {
   Map toMap();
   String toString();
 }
+
 class Notification {
   int pid;
   String channel;

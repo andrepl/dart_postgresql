@@ -47,9 +47,7 @@ class ConnectionDecorator implements pg.Connection {
     _isReleased = true;    
   }
 
-  Stream query(String sql, [values]) => _isReleased
-      ? throw _error('query')
-      : _conn.query(sql, values);
+  Stream query(String sql, [values]) => _isReleased ? throw _error('query') : _conn.query(sql, values);
 
   Future<int> execute(String sql, [values]) => _isReleased
       ? throw _error('execute')
